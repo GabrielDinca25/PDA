@@ -4,22 +4,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Consumer extends Thread {
 
-	public Thread thread;
+	public int threadId;
 	private final Lock _mutex = new ReentrantLock(true); 
-
-	public void Consume()
+	
+	Consumer(int i)
 	{
-		if(!Main.prod_queue.isEmpty())
-		{
-			Main.prod_queue.remove();
-			System.out.println("Product consumed, size = " + Main.prod_queue.size());
-		}
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
+		threadId = i;
 	}
 	
 	public void run() {
@@ -27,16 +17,28 @@ public class Consumer extends Thread {
 		while(true)
 		{
 			try
-			{
+			{	
+				Main.semBusy.acquire();
 				_mutex.lock();
-				Consume();
+				if(!Main.prodQueue.isEmpty())
+				{
+					Main.prodQueue.remove(0);
+					System.out.println("[Consumer Thread:" + threadId + "]Product consumed, size = " + Main.prodQueue.size());
+				}
 			} catch (Exception e) {
 
 	            e.printStackTrace();
+	            continue;
 	        } 
 			finally
 			{
 	        	_mutex.unlock();
+			}
+        	Main.semFree.release();
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
 		}
 		
