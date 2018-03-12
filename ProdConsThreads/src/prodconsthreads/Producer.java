@@ -3,38 +3,43 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Producer extends Thread {
-	public Thread thread;
+	public int threadId;
 	private final Lock _mutex = new ReentrantLock(true); 
-	
-	public void Produce()
+
+	Producer(int i)
 	{
-		if(Main.prod_queue.size() <= Main.stackCapacity - 1)
-		{
-			Main.prod_queue.add(1);
-			System.out.println("Product produced, size = " + Main.prod_queue.size());
-		}
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		threadId = i;
 	}
 	
 	public void run() {
 		
 		while(true)
 		{
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			try
 			{
+				Main.semFree.acquire();
 				_mutex.lock();
-				Produce();
+				if(Main.prodQueue.size() <= Main.STACK_CAPACITY - 1)
+				{
+					Main.prodQueue.add(1);
+					System.out.println("[Producer Thread:" + threadId + "]Product produced, size = " + Main.prodQueue.size());
+				}
 			} catch (Exception e) {
 	            e.printStackTrace();
+	            continue;
 	        }
 			finally
 			{
 				_mutex.unlock();
+
 			}
+			Main.semBusy.release();
+
 		}
 		
 	}
