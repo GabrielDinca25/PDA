@@ -18,15 +18,19 @@ public class Consumer extends Thread {
 		{
 			try
 			{	
-				Main.semBusy.acquire();
 				_mutex.lock();
+				
 				if(!Main.prodQueue.isEmpty())
 				{
-					Main.prodQueue.remove(0);
-					System.out.println("[Consumer Thread:" + threadId + "]Product consumed, size = " + Main.prodQueue.size());
+					Main.condCons.wait();
+					
 				}
+				Main.prodQueue.remove(0);
+				_mutex.unlock();
+				System.out.println("[Consumer Thread:" + threadId + "]Product consumed, size = " + Main.prodQueue.size());
+				Main.condProd.notify();
+				
 			} catch (Exception e) {
-
 	            e.printStackTrace();
 	            continue;
 	        } 
@@ -34,12 +38,13 @@ public class Consumer extends Thread {
 			{
 	        	_mutex.unlock();
 			}
-        	Main.semFree.release();
+        	
 			try {
 				Thread.sleep(3000);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				System.out.println("Exception caught: "+ e);			
 			}
+
 		}
 		
 	}
