@@ -16,34 +16,44 @@ public class Producer extends Thread {
 		
 		while(true)
 		{
-			try {
+			try 
+			{
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				System.out.println("Exception caught: "+ e);			
 			}
+			
 			try
 			{
 				_mutex.lock();
+				System.out.println("[Producer Thread:" + threadId + "] lock");
 				
-				if(Main.prodQueue.size() == Main.STACK_CAPACITY - 1)
+				if(Main.prodQueue.size() >= Main.STACK_CAPACITY)
 				{
-					Main.condProd.wait();
+					System.out.println("[Producer Thread:" + threadId + "] size is greater or equal than :" + Main.STACK_CAPACITY);
+					synchronized(Main.condProd){
+						System.out.println("[Producer Thread:" + threadId + "] is waiting");
+						Main.condProd.wait();
+					}
+					System.out.println("[Producer Thread:" + threadId + "] stopped waiting (probably been notified)");
 				}
 				Main.prodQueue.add(1);
+				System.out.println("[Producer Thread:" + threadId + "] added product to queue, size: " + Main.prodQueue.size());
 				_mutex.unlock();
-				System.out.println("[Producer Thread:" + threadId + "]Product produced, size = " + Main.prodQueue.size());
-				Main.condCons.notify();
+				System.out.println("[Producer Thread:" + threadId + "] unlock");
+				//System.out.println("[Producer Thread:" + threadId + "]Product produced, size = " + Main.prodQueue.size());
+				synchronized(Main.condCons){
+					System.out.println("[Producer Thread:" + threadId + "] notified consumers");
+					Main.condCons.notify();
+				}
+
 				
 			} catch (Exception e) {
 	            e.printStackTrace();
+	            _mutex.unlock();
 				continue;
 	        }
-//			finally
-//			{
-//				_mutex.unlock();
-//
-//			}
-			Main.semBusy.release();
+
 
 		}
 		

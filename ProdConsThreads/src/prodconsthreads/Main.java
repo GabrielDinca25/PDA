@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 public class Main {
 
-	public static int STACK_CAPACITY = 4;
+	public static int STACK_CAPACITY = 5;
 	public static Semaphore semFree = new Semaphore(4);
 	public static Semaphore semBusy = new Semaphore(0);
 	public static Object condProd = new Object();
@@ -14,6 +14,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		
 		int numberOfThreads = 5;
 		ArrayList<Thread> threads = new ArrayList<>();
 		for(int i=0; i<numberOfThreads; i++)

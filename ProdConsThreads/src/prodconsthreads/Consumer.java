@@ -20,24 +20,31 @@ public class Consumer extends Thread {
 			{	
 				_mutex.lock();
 				
-				if(!Main.prodQueue.isEmpty())
+				if(Main.prodQueue.isEmpty())
 				{
-					Main.condCons.wait();
-					
+					System.out.println("[Consumer Thread:" + threadId + "] Queue is empty");
+					synchronized(Main.condCons){
+						System.out.println("[Consumer Thread:" + threadId + "] waiting");
+						Main.condCons.wait();
+					}
+					System.out.println("[Consumer Thread:" + threadId + "] stopped waiting (probably been notified)");
 				}
+				
 				Main.prodQueue.remove(0);
+				System.out.println("[Consumer Thread:" + threadId + "] consumed product");
 				_mutex.unlock();
 				System.out.println("[Consumer Thread:" + threadId + "]Product consumed, size = " + Main.prodQueue.size());
-				Main.condProd.notify();
+				synchronized(Main.condProd){
+					System.out.println("[Consumer Thread:" + threadId + "] notifies producer");
+					Main.condProd.notify();
+				}
+
 				
 			} catch (Exception e) {
 	            e.printStackTrace();
+	            _mutex.unlock();
 	            continue;
 	        } 
-			finally
-			{
-	        	_mutex.unlock();
-			}
         	
 			try {
 				Thread.sleep(3000);
