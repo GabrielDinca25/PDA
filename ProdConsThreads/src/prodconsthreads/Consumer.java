@@ -4,22 +4,12 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Consumer extends Thread {
 
-	public Thread thread;
+	public int threadId;
 	private final Lock _mutex = new ReentrantLock(true); 
-
-	public void Consume()
+	
+	Consumer(int i)
 	{
-		if(!Main.prod_queue.isEmpty())
-		{
-			Main.prod_queue.remove();
-			System.out.println("Product consumed, size = " + Main.prod_queue.size());
-		}
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
+		threadId = i;
 	}
 	
 	public void run() {
@@ -27,17 +17,41 @@ public class Consumer extends Thread {
 		while(true)
 		{
 			try
-			{
+			{	
 				_mutex.lock();
-				Consume();
-			} catch (Exception e) {
+				
+				if(Main.prodQueue.isEmpty())
+				{
+					System.out.println("[Consumer Thread:" + threadId + "] Queue is empty");
+					synchronized(Main.condCons){
+						System.out.println("[Consumer Thread:" + threadId + "] waiting");
+						Main.condCons.wait();
+					}
+					System.out.println("[Consumer Thread:" + threadId + "] stopped waiting (probably been notified)");
+				}
+				
+				Main.prodQueue.remove(0);
+				System.out.println("[Consumer Thread:" + threadId + "] consumed product");
+				_mutex.unlock();
+				System.out.println("[Consumer Thread:" + threadId + "]Product consumed, size = " + Main.prodQueue.size());
+				synchronized(Main.condProd){
+					System.out.println("[Consumer Thread:" + threadId + "] notifies producer");
+					Main.condProd.notify();
+				}
 
+				
+			} catch (Exception e) {
 	            e.printStackTrace();
+	            _mutex.unlock();
+	            continue;
 	        } 
-			finally
-			{
-	        	_mutex.unlock();
+        	
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				System.out.println("Exception caught: "+ e);			
 			}
+
 		}
 		
 	}
